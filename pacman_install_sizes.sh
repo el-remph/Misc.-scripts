@@ -1,5 +1,5 @@
 #!/bin/sh
-# SPDX-FileCopyrightText:  2023-2024 The Remph <lhr@disroot.org>
+# SPDX-FileCopyrightText:  2024 The Remph <lhr@disroot.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Depends: POSIX sh, pacman (obviously), expac, GNU awk

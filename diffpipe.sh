@@ -1,5 +1,5 @@
 #!/bin/sh
-# SPDX-FileCopyrightText:  2023-2024 The Remph <lhr@disroot.org>
+# SPDX-FileCopyrightText:  2024 The Remph <lhr@disroot.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # In true POSIX shellscript, with a little help from mktemp(1) and mkfifo(1p)
@@ -24,13 +24,14 @@ die() {
 # Now parse positional parameters
 i=0 a= b= xformer=
 while test "$1" != "$sep"; do
-	case $(( i++ )) in
+	case $i in
 	0)	a=$1 ;;
 	1)	b=$1 ;;
 	2)	xformer=$1 ;;
 	3)	die 'Too many arguments' ;;
 	*)	die 'panic!' ;;
 	esac
+	: $(( i += 1 )) # fucking dash
 	shift
 done
 test $i -eq 3 || die "expected 3 arguments, got $i"
