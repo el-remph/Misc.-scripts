@@ -2,7 +2,8 @@
 # SPDX-FileCopyrightText:  2024 The Remph <lhr@disroot.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# takes input from xbps-install(1) -n. Tested on GNU and busybox awks
+# takes input from xbps-install(1) -n. Tested on gawk, mawk, nawk, and
+# busybox awk
 
 BEGIN {
 	units[0] = ""
@@ -38,7 +39,7 @@ function humanise(size, printflags,	i)
 
 function dehumanise(size,	i, n, unit)
 {
-	if (!match(size, /^([0-9]+(\.[0-9]+)?)([BKMGTPEZRQ])/)) {
+	if (!match(size, /^[0-9]+(\.[0-9]+)?[BKMGTPEZRQ]/)) {
 		print "Warning: malformed response from xbps-query(1):", size > "/dev/stderr"
 		return
 	}
@@ -48,7 +49,7 @@ function dehumanise(size,	i, n, unit)
 		return n
 	for (i in units)
 		if (units[i] == unit)
-			return n * 1024 ** i
+			return n * 1024 ^ i
 }
 
 # Performance bottleneck here, might benefit from async IO
