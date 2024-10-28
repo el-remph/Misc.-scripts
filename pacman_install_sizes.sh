@@ -2,15 +2,16 @@
 # SPDX-FileCopyrightText:  2024 The Remph <lhr@disroot.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Depends: POSIX sh, pacman (obviously), expac, GNU awk
+# Depends: POSIX sh, pacman (obviously), expac, POSIX awk (tested on GNU and
+# BWK awks), non-POSIX sort with -h option for human-readable numbers (fairly
+# common)
 
 set ${BASH_VERSION+ -o pipefail} -efmu -- $(pacman -Sp --print-format '%r/%n' --needed -- "$@")
 if test $# -gt 0; then
-	expac -S '%m\t%n' -- $@ | gawk '
+	expac -S '%m\t%n' -- $@ | awk '
 BEGIN {
 	OFS = FS = "\t"
 	total = 0
-	PROCINFO["sorted_in"] = "@val_num_desc"
 
 	# Metric prefixes (prefices?)
 	unit[10]  = "K"
@@ -25,12 +26,6 @@ BEGIN {
 	unit[100] = "Q"
 }
 
-{
-	total += $1
-	sizes[NR] = $1
-	packages[NR] = $2
-}
-
 function byte_prefix(bytes,	threshold, i)
 {
 	for (i = 100; i; i -= 10) {
@@ -42,9 +37,13 @@ function byte_prefix(bytes,	threshold, i)
 	return bytes
 }
 
+{
+	total += $1
+	print byte_prefix($1), $2 | "sort -h"
+}
+
 END {
-	for (i in sizes)
-		print byte_prefix(sizes[i]), packages[i]
+	close("sort -h")
 	print byte_prefix(total), "Total"
 }'
 fi
