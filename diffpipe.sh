@@ -10,11 +10,17 @@
 # of the form `--option ARG' are not handled; use `--option=ARG' instead
 sep=':://:://::' # separator very unlikely to be a real argument
 set -efm -- "$@" "$sep"
+
+# this is due to inconsistencies between shells of how getopts(1) maintains
+# its state when "$@" changes. Tested on bash, oksh, dash, busybox sh
+shift_after_loop=${BASH_VERSION:-$KSH_VERSION}
+
 while getopts 'qscC:uU:enyW:pF:tTlrNx:X:S:iEZbwBI:aD:d-:' o; do
 	set -- "$@" "-$o$OPTARG"
+	test -z "$shift_after_loop" && shift
 done
-set -u # OPTARG may be unbound, but hereafter unbound variables are errors
-shift $(( OPTIND - 1 ))
+set -u # OPTARG and *SH_VERSION may be unbound, but hereafter unbound variables are errors
+test -n "$shift_after_loop" && shift $(( OPTIND - 1 ))
 
 die() {
 	echo >&2 "$0: $*"
