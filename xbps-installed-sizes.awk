@@ -86,7 +86,7 @@ function real_downloadsize(pkg_and_ver, arch, action, size)
 }
 
 {
-	if (!match($1, /-[0-9]+(\.[0-9]+)+_[0-9]+$/))
+	if (!match($1, /-[0-9]+(\.[[:alnum:]]+)*(\+[0-9]+)?_[0-9]+$/))
 		print "Warning: possibly malformed pkg name+ver:", $1 > "/dev/stderr"
 
 	pkg = substr($1, 1, RSTART - 1)
