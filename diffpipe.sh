@@ -9,7 +9,7 @@
 # arguments of the form `-o ARG' rather than `-oARG'. Long option arguments
 # of the form `--option ARG' are not handled; use `--option=ARG' instead
 sep=':://:://::' # separator very unlikely to be a real argument
-set -efm -- "$@" "$sep"
+set -ef -- "$@" "$sep"
 
 # this is due to inconsistencies between shells of how getopts(1) maintains
 # its state when "$@" changes. Tested on bash, oksh, dash, busybox sh

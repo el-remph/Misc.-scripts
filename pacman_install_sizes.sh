@@ -6,7 +6,7 @@
 # BWK awks), non-POSIX sort with -h option for human-readable numbers (fairly
 # common)
 
-set ${BASH_VERSION+ -o pipefail} -efmu -- $(pacman -Sp --print-format '%r/%n' --needed -- "$@")
+set ${BASH_VERSION+ -o pipefail} -efu -- $(pacman -Sp --print-format '%r/%n' --needed -- "$@")
 if test $# -gt 0; then
 	expac -S '%m\t%n' -- $@ | awk '
 BEGIN {
