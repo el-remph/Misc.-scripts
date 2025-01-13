@@ -7,7 +7,9 @@
 # groff_man(7)). At present it only does the OPTIONS/DESCRIPTION section,
 # so is best used as part of a manpage.1.in template. Or not at all
 #
-# Depends mostly on POSIX sed, though some GNU extensions may have snuck in
+# Depends mostly on POSIX sed, though some GNU extensions may have snuck
+# in. Seems to work on busybox sed, which doesn't like backslash escapes
+# like \v or \037, so we have to raw it instead.
 
 #1e date ".Dd %Y-%m-%d"
 
@@ -16,11 +18,11 @@
 1i\
 .Bl -tag -width indent
 
-# Option and argument are prepended to pattern space, separated by vertical
-# tabs (so please don't have vtabs in your --help output:). This makes for
-# a way of having multiple variables in sed, instead of one big pattern space;
-# they can be compared using backreferences
-s/^\s+(--?[^-[:space:]]+(, *)?)+((\[)?[= ](\w+)\]?)?(\t|$)/.It Fl \1 \4\5\n\1\v\5\v\6/
+# Option and argument are prepended to pattern space, separated by ASCII US
+# (unit separator: ^_, \037); obviously don't have that in your --help
+# output. This makes for a way of having multiple variables in sed, instead
+# of one big pattern space; they can be compared using backreferences.
+s/^\s+(--?[^-[:space:]]+(, *)?)+((\[)?[= ](\w+)\]?)?(\t|$)/.It Fl \1 \4\5\n\1\5\6/
 #     ^Option            ^comma  ^Argument
 tmatch
 d
@@ -52,15 +54,15 @@ p
 x
 
 # If multiple options were specified, separate them
-/.*,.*\v/ {
+/.*,.*/ {
 	h
 	# Isolate options
-	s/\v.*\v.*/\v/
+	s/.*.*//
 	# Separate options
-	s/\s*,\s*/\v/g
+	s/\s*,\s*//g
 	# Prepend them, replacing where they were
 	x
-	s/\v.*//
+	s/.*//
 	x
 	G
 	s/\n//
@@ -70,7 +72,7 @@ x
 :opt_desc_nextline
 $bend
 N
-# ...until we find a line that either is not indentated, or is a new option
+# ...until we find a line that either is not indented, or is a new option
 # description
 /.*\n\t[[:blank:]]*[^-\n][^\n]*$/bopt_desc_nextline
 
@@ -81,24 +83,24 @@ h
 s/\n[^\n]*$//
 
 # In the mix, we also mark all instances of any arg
-/^\v/! {
+/^/! {
 	:mark_args
 	# Oh my god the horror. No lookbehinds, and \b doesn't work right. .XX
 	# is a placeholder directive
-	s/(\v|^)([^\v]+)\v([^\n]*\n?|.*\n[^.]([^\n]*\W)?)\2(\W|$)/\1\2\v\3\n.Xx \2\n\5/
+	s/(|^)([^]+)([^\n]*\n?|.*\n[^.]([^\n]*\W)?)\2(\W|$)/\1\2\3\n.Xx \2\n\5/
 	#       ^Opt/Arg   ^Line 1   ^Other lines        ^Opt/Arg
 	tmark_args
 	# Remove placeholders: differentiate flags from optargs
-	# If the last vtab-separated field is nonempty, then opt should take an arg
-	/\v\v[^\v]*$/!s/(\n\.)Xx -([^\n]*)\n\s*(\w+)\s*/\1Fl \2 Ar \3\n/g
+	# If the last US-separated field is nonempty, then opt should take an arg
+	/[^]*$/!s/(\n\.)Xx -([^\n]*)\n\s*(\w+)\s*/\1Fl \2 Ar \3\n/g
 	s/(\n\.)Xx -/\1Fl /g
 	s/(\n\.)Xx/\1Ar/g
 }
 
 # Remove leading whitespace
-s/(^|[\n\v])[[:blank:]]*/\1/g
+s/(^|[\n])[[:blank:]]*/\1/g
 # Lose preset arg
-s/^.*\v//
+s/^.*//
 
 # Complete the shuffle
 p
