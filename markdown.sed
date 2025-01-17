@@ -62,10 +62,13 @@ s/^\n//
 	b
 }
 
+# Pass through raw HTML
+/^\s*<.*>/b
+
 # (un)ordered lists are practically inline, and if we process them first then
 # asterisk <ul>s shouldn't conflict with <em>. [TODO] Make the ^ into (^|\n)
 # and let them actually be inline
-/^[-*]/{
+/^[-*]\s/{
 	# noop branch to reset t state
 	bul
 	:ul
@@ -102,25 +105,12 @@ s/(^|[[:alnum:]_\n])---([[:alnum:]_\n]|$)/\1\&mdash;\2/g
 
 # Determine block type
 
-# Repetition here, a tragic necessity
-/\n={3,}$/ {
-	s/\n={3,}$//
-	i\
-<h1>
-	a\
-</h1>
-	b
-}
-/\n-{3,}$/ {
-	s/\n-{3,}$//
-	i\
-<h2>
-	a\
-</h2>
-	b
+/\n(-{3,}|={3,})$/ {
+	s/(.*)\n={3,}$/<h1>\1/
+	s/(.*)\n-{3,}$/<h2>\1/
+	bheading
 }
 
-# Oh no
 /^#[^\n]*$/ {
 	s/^#{6}\s*/<h6>/
 	s/^#{5}\s*/<h5>/
@@ -128,6 +118,10 @@ s/(^|[[:alnum:]_\n])---([[:alnum:]_\n]|$)/\1\&mdash;\2/g
 	s/^#{3}\s*/<h3>/
 	s/^#{2}\s*/<h2>/
 	s/^#{1}\s*/<h1>/
+
+	:heading
+
+	# PHP Markdown Extra attributes
 	s/\s*#*\s*\{((\s*([#.][[:alnum:]_-]+|[[:alnum:]_-]+=([[:alnum:]_-]+|"[^"]*")))*)\}\s*$/\n\1/
 	/\n/ {
 		# oh god, oh man
@@ -147,7 +141,18 @@ s/(^|[[:alnum:]_\n])---([[:alnum:]_\n]|$)/\1\&mdash;\2/g
 		s|^(<h[0-9] [^>]*)(\s[[:alnum:]_-]+=)([^>"])|\1\2"\3"|
 		th_qkv
 	}
-	s/\s*$//
+	s/\s+$//
+
+	# auto-reference
+	h
+	# sanitise for use as an id
+	s/<[^>]+>//g
+	s/[^[:alnum:]_-]+$//
+	s/[^[:alnum:]_-]/-/g
+	# insert sanitised id, early in the attributes so it can be overridden
+	G
+	s/^([^\n]*)\n(<h[0-9])/\2 id="\1"/
+
 	s|^<(h[0-9]).*|&</\1>|
 	b
 }
